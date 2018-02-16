@@ -1,12 +1,12 @@
 package com.example.demo;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -138,5 +138,75 @@ public class TestFunction {
                 .noneMatch(s -> true));
         System.out.println(streamSupplier.get()
                 .anyMatch(s -> true));
+
+        List<Person> persons = Arrays.asList(
+                new Person("lpz",42),
+                new Person("lph",30),
+                new Person("lym",12),
+                new Person("cxy",12)
+        );
+
+        List<Person> filted = persons
+                .stream()
+                .filter(person -> person.name.startsWith("lp"))
+                .collect(Collectors.toList()); // 收集成一个List
+        System.out.println(filted);
+
+        Map<Integer,List<Person>> personsByAge = persons
+                .stream()
+                .collect(Collectors.groupingBy( o -> o.age));// 流化后用collect收集,按年龄收集
+
+        personsByAge
+                .forEach((age,p) -> System.out.format("age %s: %s\n",age,p));// (age,p)是Map定义的排列顺序,这里是推断出来的。
+
+        Double averageAge = persons
+                .stream()
+                .collect(Collectors.averagingInt(p->p.age));
+
+        System.out.println(averageAge);
+
+        IntSummaryStatistics ageSummary = persons
+                .stream()
+                .collect(Collectors.summarizingInt(p -> p.age));
+
+        System.out.println(ageSummary);
+        // collect用法很多,反正是收集每个输入结果进行运算,注意collect里面的都是Collectors.的成员
+
+        String phrase = persons
+                .stream()
+                .filter(person -> person.age >=18)
+                .map(person -> person.name) // 取出person中的一个成员
+                .collect(Collectors.joining(" and ","在中国"," 是合法年龄"));
+        System.out.println(phrase);
+
+//        转换成map时如何避免key冲突
+        Map<Integer,String> map = persons
+                .stream()
+                .collect(Collectors.toMap(
+                        p->p.age, // map的key
+                        p->p.name,// map的value
+                        (name1,name2)->name1+";"+name2 //避免冲突的HASH函数
+                ));
+        System.out.println(map);
+
+    }
+
+
+}
+
+class Person{
+    String name;
+    int age;
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
+
+
