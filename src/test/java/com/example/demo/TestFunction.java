@@ -2,9 +2,7 @@ package com.example.demo;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -188,6 +186,130 @@ public class TestFunction {
                         (name1,name2)->name1+";"+name2 //避免冲突的HASH函数
                 ));
         System.out.println(map);
+
+        // 自定义一个Collector接口：我们的目标是将stream中所有用户的用户名变成大写并用"|"符号连接成一个字符串。
+        Collector<Person,StringJoiner,String> personNameCollector =
+               /* Collector.of(
+                        ()->new StringJoiner(" | "), // supplier 提供者
+                        (j,p)->j.add(p.name.toUpperCase()), // accumulator 累加器,每个对象进来都要做这一步
+                        (j1,j2)->j1.merge(j2), //combiner // 连接器
+                        StringJoiner::toString  // finisher // 完成
+                );*/
+                new Collector<Person, StringJoiner, String>() {
+
+                    @Override
+                    public Supplier<StringJoiner> supplier() {
+//                        return () -> new StringJoiner(" | "); // ()推断为Supplier接口的get函数
+                        return new Supplier<StringJoiner>() { // 这里就是匿名类和lamda表达式的转换由系统自动完成
+                            @Override
+                            public StringJoiner get() {
+                                return new StringJoiner(" | ");
+                            }
+                        };
+                    }
+                    @Override
+                    public BiConsumer<StringJoiner, Person> accumulator() {
+                        //return (j,p)->j.add(p.name.toUpperCase());
+                        return  new BiConsumer<StringJoiner, Person>() {
+                            @Override
+                            public void accept(StringJoiner stringJoiner, Person person) {
+                                stringJoiner.add(person.name.toUpperCase());
+                            }
+                        };
+                    }
+                    @Override
+                    public BinaryOperator<StringJoiner> combiner() {
+//                        return (j1,j2)->j1.merge(j2);
+                        return new BinaryOperator<StringJoiner>() {
+                            @Override
+                            public StringJoiner apply(StringJoiner stringJoiner, StringJoiner stringJoiner2) {
+                                return stringJoiner.merge(stringJoiner2);
+                            }
+                        };
+                    }
+                    @Override
+                    public Function<StringJoiner, String> finisher() {
+//                        return StringJoiner::toString;
+                        return new Function<StringJoiner, String>() {
+                            @Override
+                            public String apply(StringJoiner stringJoiner) {
+                                return stringJoiner.toString();
+                            }
+                        };
+                    }
+                    @Override
+                    public Set<Characteristics> characteristics() {
+//                        return new HashSet<>();
+                        return new Set<Characteristics>() {
+                            @Override
+                            public int size() {
+                                return 0;
+                            }
+
+                            @Override
+                            public boolean isEmpty() {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean contains(Object o) {
+                                return false;
+                            }
+
+                            @Override
+                            public Iterator<Characteristics> iterator() {
+                                return null;
+                            }
+
+                            @Override
+                            public Object[] toArray() {
+                                return new Object[0];
+                            }
+
+                            @Override
+                            public <T> T[] toArray(T[] a) {
+                                return null;
+                            }
+
+                            @Override
+                            public boolean add(Characteristics characteristics) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean remove(Object o) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean containsAll(Collection<?> c) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean addAll(Collection<? extends Characteristics> c) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean retainAll(Collection<?> c) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean removeAll(Collection<?> c) {
+                                return false;
+                            }
+
+                            @Override
+                            public void clear() {
+                            }
+                        };
+                    }
+                };
+
+               String names = persons.stream().collect(personNameCollector);
+               System.out.println(names);
 
     }
 
