@@ -311,6 +311,22 @@ public class TestFunction {
                String names = persons.stream().collect(personNameCollector);
                System.out.println(names);
 
+               List<Foo> foos = new ArrayList<>();
+
+               IntStream
+                       .range(1,4)
+                       .forEach(i -> foos.add(new Foo("Foo"+i)));
+
+               foos.forEach(foo ->
+                       IntStream
+                               .range(1,4)
+                               .forEach(i-> foo.bars.add(new Bar("Bar"+i+"<="+foo.name)))
+               );
+
+               foos.stream()
+                       .flatMap(foo -> foo.bars.stream())
+                       .forEach(bar -> System.out.println(bar.name));
+
     }
 
 
@@ -328,6 +344,23 @@ class Person{
     @Override
     public String toString() {
         return name;
+    }
+}
+
+class Foo{
+    String name;
+    List<Bar> bars = new ArrayList<>();
+
+    public Foo(String name) {
+        this.name = name;
+    }
+}
+
+class Bar{
+    String name;
+
+    public Bar(String name) {
+        this.name = name;
     }
 }
 
